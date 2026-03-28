@@ -34,7 +34,14 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
-
+        
+    - name: Install CMake 3.31+
+      run: |
+        wget https://github.com/Kitware/CMake/releases/download/v3.31.0/cmake-3.31.0-linux-x86_64.tar.gz
+        tar xzf cmake-3.31.0-linux-x86_64.tar.gz
+        sudo cp -r cmake-3.31.0-linux-x86_64/* /usr/local/
+        cmake --version
+    
     - name: 克隆基础源码
       working-directory: /workdir
       run: |
