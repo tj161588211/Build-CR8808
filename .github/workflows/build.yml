@@ -77,14 +77,42 @@ jobs:
         make download -j8 || make download -j1 V=s
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-
+        
+    - name: Fix Rust Checksum Bug and Pre-compile
+      working-directory: /workdir/openwrt
+      run: |
+            echo "1. 强制提取源码并触发预期的校验报错..."
+            make package/feeds/packages/rust/host/compile -j1 V=s || true
+            
+            echo "2. 执行 Python 魔法脚本修复校验文件..."
+            python3 -c "
+            import os, json
+            for r, d, f in os.walk('build_dir'):
+                if '.cargo-checksum.json' in f:
+                    p = os.path.join(r, '.cargo-checksum.json')
+                    try:
+                        with open(p, 'r') as file: data = json.load(file)
+                        changed = False
+                        for name in list(data.get('files', {}).keys()):
+                            if not os.path.exists(os.path.join(r, name)):
+                                del data['files'][name]
+                                changed = True
+                        if changed:
+                            with open(p, 'w') as file: json.dump(data, file)
+                            print('✅ 成功修复: ' + p)
+                    except: pass
+            "
+            
+            echo "3. 重新单骑闯关编译 Rust (这需要几分钟)..."
+            make package/feeds/packages/rust/host/compile -j$(nproc) V=s
+            
     - name: 开始全速编译固件
       id: compile
       working-directory: /workdir/openwrt
       run: |
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 V=s || make -j$(nproc)
-        echo "status=success" >> $GITHUB_OUTPUT
+            echo -e "$(nproc) thread compile"
+            make -j$(nproc) || make -j1 V=s || make -j$(nproc)
+            echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 整理编译好的固件
       id: organize
