@@ -35,7 +35,7 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
         
-    - name: Install CMake 3.31+
+    - name: 更新构建环境中的 CMake-Install CMake 3.31+
       run: |
         wget https://github.com/Kitware/CMake/releases/download/v3.31.0/cmake-3.31.0-linux-x86_64.tar.gz
         tar xzf cmake-3.31.0-linux-x86_64.tar.gz
