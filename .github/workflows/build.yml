@@ -78,11 +78,11 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
         
-    - name: Fix Rust Checksum Bug and Pre-compile
+    - name: Fix Rust Checksum Bug (Prepare only)
       working-directory: /workdir/openwrt
       run: |
-            echo "1. 强制提取源码并触发预期的校验报错..."
-            make package/feeds/packages/rust/host/compile -j1 V=s || true
+            echo "1. 仅下载并解压 Rust 源码（不提前编译，等待工具链就绪）..."
+            make package/feeds/packages/rust/host/prepare V=s
             
             echo "2. 执行 Python 魔法脚本修复校验文件..."
             python3 -c "
@@ -99,12 +99,9 @@ jobs:
                                 changed = True
                         if changed:
                             with open(p, 'w') as file: json.dump(data, file)
-                            print('✅ 成功修复: ' + p)
+                            print('✅ 成功修复清单文件: ' + p)
                     except: pass
             "
-            
-            echo "3. 重新单骑闯关编译 Rust (这需要几分钟)..."
-            make package/feeds/packages/rust/host/compile -j$(nproc) V=s
             
     - name: 开始全速编译固件
       id: compile
